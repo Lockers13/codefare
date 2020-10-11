@@ -17,6 +17,7 @@ import requests
 # from datetime import datetime
 from app import settings
 from rest_framework.views import APIView
+from app import forms as app_forms
 
 
 
@@ -26,21 +27,22 @@ class CodeValidation(APIView):
         return Response("hello", status=status.HTTP_200_OK)
 
     def post(self, request):
-
-        file_obj = request.FILES['file-upload']
-        resp = 'Valid'
-
-        for line in file_obj:
-            cleaned_line = line.decode("utf-8").strip('\n')
-            if cleaned_line.startswith("#include <stdlib.h>"):
-                resp = 'Invalid: use of unavailable library'
-                return Response(resp, status=status.HTTP_200_OK)
-            if cleaned_line.startswith("int main"):
-                break
-
-        # do some stuff with uploaded file
-        return Response(resp, status=status.HTTP_200_OK)
-    
+        form = app_forms.UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            file_obj = request.FILES['upload_file']
+            resp = 'Valid'
+            for line in file_obj:
+                cleaned_line = line.decode("utf-8").strip('\n')
+                print(cleaned_line)
+                if cleaned_line.startswith("#include <stdlib.h>"):
+                    resp = 'Invalid: use of unavailable library'
+                    return Response(resp, status=status.HTTP_200_OK)
+                if cleaned_line.startswith("int main"):
+                    break
+            return Response(resp, status=status.HTTP_200_OK)
+        else:
+            form = UploadFileForm()
+            return render(request, 'index.html', {'form': form})
 
 
 

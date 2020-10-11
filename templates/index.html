@@ -4,15 +4,12 @@
 {% load static %}
 {% block content %}
 
-<form id="code_form" method="post" action="" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="form-row">
-          <div class="form-group col-md-6 mb-0">
-            {{ form.title }}
-          </div>
-          <input type="file" name="code_file">
-        <button type="submit" id="submit_btn" class="btn btn-primary">Submit</button>
+<form id="code_form" action="" enctype="multipart/form-data" method="post">
+  {{ form|crispy }}
+  <input type="submit" value="Submit">
 </form>
+<div id="div1">
+</div>
 
 <script src="{% static 'js/index.js' %}"></script>
 {% endblock %}
