@@ -3,13 +3,28 @@
 {% load crispy_forms_tags %}
 {% load static %}
 {% block content %}
-
+<div style="  margin: auto;
+width: 50%;
+border: 3px solid #800042;
+padding: 10px;">
 <form id="code_form" action="" enctype="multipart/form-data" method="post">
-  {{ form|crispy }}
-  <input type="submit" value="Submit">
+  {% csrf_token %}
+    <div class="form-row">
+      <div class="form-group col-md-6 mb-0">
+        {{ form.title|as_crispy_field }}
+      </div>
+      </div>
+      <br>
+    <div class="form-row">
+      <div class="form-group col-md-6 mb-0">
+        {{ form.upload_file }}
+      </div>
+    </div>
+  <br>
+    <button type="submit" class="btn btn-primary">Submit your code!</button>
 </form>
-<div id="div1">
 </div>
+
 
 <script src="{% static 'js/index.js' %}"></script>
 {% endblock %}

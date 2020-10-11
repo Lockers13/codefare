@@ -41,7 +41,7 @@ class CodeValidation(APIView):
                     break
             return Response(resp, status=status.HTTP_200_OK)
         else:
-            form = UploadFileForm()
+            form = app_forms.UploadFileForm()
             return render(request, 'index.html', {'form': form})
 
 
