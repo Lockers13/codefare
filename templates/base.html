@@ -1,0 +1,16 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+
+	{% if title %}
+		<title>CodeFare - {{ title }}</title>
+	{% else %}
+		<title>CodeFare</title>
+	{% endif %}
+</head>
+<body>
+    {% block content %}
+    {% endblock %}
+</body>
+</html>
