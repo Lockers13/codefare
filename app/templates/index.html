@@ -3,10 +3,19 @@
 {% load crispy_forms_tags %}
 {% load static %}
 {% block content %}
-<div style="  margin: auto;
-width: 50%;
-border: 3px solid #800042;
-padding: 10px;">
+
+<!-- <h1>Problem: Write a quicksort algorithm, which sorts the following array...</h1>
+<h1>Problem: Write a quicksort algorithm, which sorts the following array...</h1>
+<h1>Problem: Write a quicksort algorithm, which sorts the following array...</h1>
+<h1>Problem: Write a quicksort algorithm, which sorts the following array...</h1>
+<h1>Problem: Write a quicksort algorithm, which sorts the following array...</h1>
+<h1>Problem: Write a quicksort algorithm, which sorts the following array...</h1>
+<h1>Problem: Write a quicksort algorithm, which sorts the following array...</h1>-->
+<br>
+<h1 style="position:relative">Problem: Write a quicksort algorithm, which sorts the following array...</h1> 
+<p id="prob_info"></p>
+<div style="position: fixed; bottom: 0; width: 100%;">
+<div style="margin: auto; width: 50%; border: 3px solid #800042; padding: 10px;">
 <form id="code_form" action="" enctype="multipart/form-data" method="post">
   {% csrf_token %}
     <div class="form-row">
@@ -23,6 +32,10 @@ padding: 10px;">
   <br>
     <button type="submit" class="btn btn-primary">Submit your code!</button>
 </form>
+<div>
+  <p id="response"></p>
+</div>
+</div>
 </div>
 
 

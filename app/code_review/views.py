@@ -18,6 +18,8 @@ import requests
 from app import settings
 from rest_framework.views import APIView
 from app import forms as app_forms
+from django.contrib.staticfiles.storage import staticfiles_storage
+
 
 dummyQ_dict = {'l20': {
     'p1': {'desc': 'Build a Web Server',
@@ -51,7 +53,12 @@ def check_libs(file_obj, ext, ql_info_obj):
 
 class CodeValidation(APIView):
     def get(self, request):
-        return Response("hello", status=status.HTTP_200_OK)
+        
+        path = os.path.join(settings.BASE_DIR, 'static/json/dql.json')
+        print(path)
+        with open(path, 'r') as f:
+            dummy_json_string = f.read()
+        return Response(dummy_json_string, status=status.HTTP_200_OK)
 
     def post(self, request):
 
@@ -61,9 +68,9 @@ class CodeValidation(APIView):
         if form.is_valid():
             file_obj = request.FILES['upload_file']
             basename, ext = file_obj.name.split('.')
-            resp = 'Valid'
+            resp = 'Congratulations, your submission was valid...!'
             if not check_libs(file_obj, ext, l20p1info):
-                resp = 'Invalid: use of unavailable library'
+                resp = 'Invalid sumbission: use of unavailable library'
                 return Response(resp, status=status.HTTP_200_OK)
             return Response(resp, status=status.HTTP_200_OK)
         else:
