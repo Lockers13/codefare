@@ -19,6 +19,7 @@ from app import settings
 from rest_framework.views import APIView
 from app import forms as app_forms
 from django.contrib.staticfiles.storage import staticfiles_storage
+import subprocess
 
 
 dummyQ_dict = {'l20': {
@@ -61,17 +62,29 @@ class CodeValidation(APIView):
         return Response(dummy_json_string, status=status.HTTP_200_OK)
 
     def post(self, request):
+        path = os.path.join(settings.BASE_DIR, 'static/uploaded_progs/')
+
 
         l20p1info = dummyQ_dict['l20']['p1']['languages']
         form = app_forms.UploadFileForm(request.POST, request.FILES)
 
         if form.is_valid():
             file_obj = request.FILES['upload_file']
+            path = os.path.join(settings.BASE_DIR, 'static/uploaded_progs/', file_obj.name)
+            print("PATH =", path)
             basename, ext = file_obj.name.split('.')
             resp = 'Congratulations, your submission was valid...!'
             if not check_libs(file_obj, ext, l20p1info):
                 resp = 'Invalid sumbission: use of unavailable library'
                 return Response(resp, status=status.HTTP_200_OK)
+            with open(path, 'w') as f:
+                for line in file_obj:
+                    cleaned_line = line.decode("utf-8")
+                    f.write(cleaned_line)
+            sp1 = subprocess.Popen(["gcc {0}".format(path)], shell=True)
+            sp1.wait()
+            sp2 = subprocess.Popen(["./a.out > {0}".format(path)], shell=True)
+            sp2.wait()
             return Response(resp, status=status.HTTP_200_OK)
         else:
             form = app_forms.UploadFileForm()
