@@ -20,20 +20,8 @@ from rest_framework.views import APIView
 from app import forms as app_forms
 from django.contrib.staticfiles.storage import staticfiles_storage
 import subprocess
+import hashlib
 
-
-dummyQ_dict = {'l20': {
-    'p1': {'desc': 'Build a Web Server',
-            'languages': {
-                'py': {'keyword': 'import', 'score': 10, 'libs':['os', 'sys', 'urllib', 'json', 'requests']},
-                'c': {'keyword': '#include', 'score': 50, 'libs': ['<stdio.h>', '<stdlib.h>']},
-                'cpp': {'keyword': '', 'score': 40, 'libs': []}, 
-                'rb': {'keyword': 'require', 'score': 20, 'libs': []}, 
-                'java': {'keyword': 'import', 'score': 30, 'libs': []}
-            }
-        }
-    }
-}
 
 def check_libs(file_obj, ext, ql_info_obj):
     allowed_libs = ql_info_obj[ext]['libs']
@@ -41,7 +29,6 @@ def check_libs(file_obj, ext, ql_info_obj):
 
     for line in file_obj:
         cleaned_line = line.decode("utf-8").strip('\n')
-        print(cleaned_line)
         if cleaned_line.startswith(imp_kword):
             if cleaned_line.split(" ")[1] not in allowed_libs:
                 return False
@@ -50,42 +37,93 @@ def check_libs(file_obj, ext, ql_info_obj):
     return True
 
 
-
-
 class CodeValidation(APIView):
+
+    def run_prog(request, ext, inpath, outpath, samplepath):
+        def check_output(samplepath, outpath):
+            with open(outpath, 'r') as f1:
+                stripped_sub = f1.read().replace('\n', '').replace(" ", "")
+
+            hash_sub = hashlib.md5(stripped_sub.encode()).hexdigest()
+            
+            with open(samplepath, 'r') as f2:
+                hash_samp = f2.read()  
+            
+            return hash_samp == hash_sub
+            
+
+        def run_c():
+            try:
+                subprocess.Popen(["gcc {0}".format(inpath)], shell=True).wait()
+            except Exception as e:
+                print(str(e))
+                return False
+            try: 
+                subprocess.Popen(["./a.out > {0}".format(outpath)], shell=True).wait()
+            except Exception as e:
+                print(str(e))
+                return False
+
+            return check_output(samplepath, outpath)
+
+            
+        def run_py():
+            try: 
+                subprocess.Popen(["python {0} > {1}".format(inpath, outpath)], shell=True).wait()
+            except Exception as e:
+                print(str(e))
+                return False
+            
+            return check_output(samplepath, outpath)
+
+        def run_rb():
+            pass
+        def run_java():
+            pass
+        def run_cpp():
+            pass
+
+        ext_case = {'c': run_c, 'py': run_py, 'java': run_java, 'rb': run_rb, 'cpp': run_cpp}
+        return ext_case[ext]()
+
+
     def get(self, request):
         
-        path = os.path.join(settings.BASE_DIR, 'static/json/dql.json')
-        print(path)
-        with open(path, 'r') as f:
+        infopath = os.path.join(settings.BASE_DIR, 'static/json/dql.json')
+        with open(infopath, 'r') as f:
             dummy_json_string = f.read()
         return Response(dummy_json_string, status=status.HTTP_200_OK)
 
     def post(self, request):
-        path = os.path.join(settings.BASE_DIR, 'static/uploaded_progs/')
 
+        infopath = os.path.join(settings.BASE_DIR, 'static/json/dql.json')
+        with open(infopath, 'r') as f:
+            dummy_json = json.loads(f.read())
 
-        l20p1info = dummyQ_dict['l20']['p1']['languages']
+        l20p1info = dummy_json['20']['p1']['languages']
         form = app_forms.UploadFileForm(request.POST, request.FILES)
 
         if form.is_valid():
+            
             file_obj = request.FILES['upload_file']
-            path = os.path.join(settings.BASE_DIR, 'static/uploaded_progs/', file_obj.name)
-            print("PATH =", path)
+            inpath = os.path.join(settings.BASE_DIR, 'static/uploaded_progs/', file_obj.name)
             basename, ext = file_obj.name.split('.')
             resp = 'Congratulations, your submission was valid...!'
             if not check_libs(file_obj, ext, l20p1info):
                 resp = 'Invalid sumbission: use of unavailable library'
                 return Response(resp, status=status.HTTP_200_OK)
-            with open(path, 'w') as f:
+            with open(inpath, 'w') as f:
                 for line in file_obj:
                     cleaned_line = line.decode("utf-8")
                     f.write(cleaned_line)
-            sp1 = subprocess.Popen(["gcc {0}".format(path)], shell=True)
-            sp1.wait()
-            sp2 = subprocess.Popen(["./a.out > {0}".format(path)], shell=True)
-            sp2.wait()
-            return Response(resp, status=status.HTTP_200_OK)
+            outpath = os.path.join(settings.BASE_DIR, 'static/uploaded_progs/output/', basename + ext + '.txt')
+            samplepath = os.path.join(settings.BASE_DIR, 'static/sample_outputs/', basename + '_hash.txt')
+
+            if self.run_prog(ext, inpath, outpath, samplepath):
+                return Response(resp, status=status.HTTP_200_OK)
+            else:
+                resp = 'Oops! Incorrect output, please try again'
+                return Response(resp, status=status.HTTP_200_OK)
         else:
             form = app_forms.UploadFileForm()
             return render(request, 'index.html', {'form': form})
