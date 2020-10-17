@@ -1,13 +1,24 @@
 #include <stdio.h>
+#include <stdlib.h>
+
+int ARR_SIZE = 20;
+
 
 void quicksort(int sort_arr[], int lo, int hi, int size);
 int partition(int sort_arr[], int lo, int hi, int size);
+void init_arr_from_file(int arr[], char* filepath);
 
 int main(int argc, char** argv) {
-    int sort_arr[] = {1,4,5,3,7,6,19,2,9,16,11};
-    int arr_size = sizeof(sort_arr)/sizeof(sort_arr[0]);
+    int arr[ARR_SIZE];
+    char* filepath;
 
-    quicksort(sort_arr, 0, arr_size - 1, arr_size);
+    filepath = argv[1];
+
+    init_arr_from_file(arr, filepath);
+    
+
+    quicksort(arr, 0, ARR_SIZE - 1, ARR_SIZE);
+
     return 0;
 }
 
@@ -43,3 +54,20 @@ int partition(int sort_arr[], int lo, int hi, int size) {
 
 }
     
+void init_arr_from_file(int arr[], char* filepath) {
+    FILE *fp;
+    int i;
+
+    fp = fopen(filepath, "r");
+
+    if (fp == NULL){
+        printf("Error Reading File\n");
+        exit(0);
+    }
+
+    for (i = 0; i < ARR_SIZE; i++){
+        fscanf(fp, "%d\n", &arr[i] );
+    }
+
+    fclose(fp);
+}

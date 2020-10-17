@@ -4,5 +4,6 @@ from . import views as cr_views
 
 urlpatterns = [
 	path('validate/', cr_views.CodeValidation.as_view(), name="code_validation"),
+	path('download_template/', cr_views.download_file, name="file_download"),
 ]
 

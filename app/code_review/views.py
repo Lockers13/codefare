@@ -21,6 +21,19 @@ from app import forms as app_forms
 from django.contrib.staticfiles.storage import staticfiles_storage
 import subprocess
 import hashlib
+import mimetypes
+from django.http import HttpResponse
+
+
+def download_file(request):
+    fl_path = os.path.join(settings.BASE_DIR, 'static/code_templates/quicksort_template.c')
+    filename = 'quicksort_template.c'
+
+    fl = open(fl_path, 'r')
+    mime_type, _ = mimetypes.guess_type(fl_path)
+    response = HttpResponse(fl, content_type=mime_type)
+    response['Content-Disposition'] = "attachment; filename={0}".format(filename)
+    return response
 
 
 def check_libs(file_obj, ext, ql_info_obj):
@@ -39,32 +52,41 @@ def check_libs(file_obj, ext, ql_info_obj):
 
 class CodeValidation(APIView):
 
-    def run_prog(request, ext, inpath, outpath, samplepath):
+    def run_prog(request, ext, inpath, outpath, samplepath, basename):
         def check_output(samplepath, outpath):
+            print(outpath)
+
             with open(outpath, 'r') as f1:
                 stripped_sub = f1.read().replace('\n', '').replace(" ", "")
-
+    
             hash_sub = hashlib.md5(stripped_sub.encode()).hexdigest()
             
             with open(samplepath, 'r') as f2:
                 hash_samp = f2.read()  
-            
-            return hash_samp == hash_sub
+            correct = hash_samp == hash_sub
+            print(correct)
+            return correct
             
 
         def run_c():
             try:
                 subprocess.Popen(["gcc {0}".format(inpath)], shell=True).wait()
             except Exception as e:
-                print(str(e))
+                print("YO1")
                 return False
-            try: 
-                subprocess.Popen(["./a.out > {0}".format(outpath)], shell=True).wait()
-            except Exception as e:
-                print(str(e))
-                return False
-
-            return check_output(samplepath, outpath)
+            for i in range(2):
+                op = outpath + 'output{0}.txt'.format(str(i+1))
+                sp = samplepath.split('.')[0] + str(i+1) + '.txt'
+                input_file = os.path.join(settings.BASE_DIR, 'static/input_files/', basename + '_input{0}'.format(str(i+1)) + '.txt')
+                print(input_file)
+                try: 
+                    subprocess.Popen(["./a.out {0} > {1}".format(input_file, op)], shell=True).wait()
+                except Exception as e:
+                    print("YO2")
+                    return False
+                if not check_output(sp, op):
+                    return False
+            return True
 
             
         def run_py():
@@ -116,10 +138,10 @@ class CodeValidation(APIView):
                 for line in file_obj:
                     cleaned_line = line.decode("utf-8")
                     f.write(cleaned_line)
-            outpath = os.path.join(settings.BASE_DIR, 'static/uploaded_progs/output/', basename + ext + '.txt')
+            outpath = os.path.join(settings.BASE_DIR, 'static/uploaded_progs/output/', basename)
             samplepath = os.path.join(settings.BASE_DIR, 'static/sample_outputs/', basename + '_hash.txt')
 
-            if self.run_prog(ext, inpath, outpath, samplepath):
+            if self.run_prog(ext, inpath, outpath, samplepath, basename):
                 return Response(resp, status=status.HTTP_200_OK)
             else:
                 resp = 'Oops! Incorrect output, please try again'
