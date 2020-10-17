@@ -18,6 +18,9 @@ int main(int argc, char** argv) {
     
 
     quicksort(arr, 0, ARR_SIZE - 1, ARR_SIZE);
+    for(int i = 0; i < ARR_SIZE; i++)
+        printf("%d ", arr[i]);  
+    putchar('\n'); 
 
     return 0;
 }
